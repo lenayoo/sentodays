@@ -26,14 +26,16 @@ class LaunchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const MainPage()));
-          },
-          child: const Text('入ろう！'),
+      body: SafeArea(
+        child: Center(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const MainPage()));
+            },
+            child: const Text('入ろう！'),
+          ),
         ),
       ),
     );
@@ -59,8 +61,8 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _openAddDialog() async {
     int step = 0;
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController specialController = TextEditingController();
+    String name = '';
+    String specialPoint = '';
 
     final SentoInfo? result = await showDialog<SentoInfo>(
       context: context,
@@ -76,8 +78,15 @@ class _MainPageState extends State<MainPage> {
                   Text(isNameStep ? '名前を教えてください。' : '特別な点を教えて下さい。'),
                   const SizedBox(height: 12),
                   TextField(
-                    controller: isNameStep ? nameController : specialController,
+                    key: ValueKey<int>(step),
                     autofocus: true,
+                    onChanged: (String value) {
+                      if (isNameStep) {
+                        name = value;
+                        return;
+                      }
+                      specialPoint = value;
+                    },
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                     ),
@@ -92,7 +101,7 @@ class _MainPageState extends State<MainPage> {
                 FilledButton(
                   onPressed: () {
                     if (isNameStep) {
-                      if (nameController.text.trim().isEmpty) {
+                      if (name.trim().isEmpty) {
                         return;
                       }
                       setDialogState(() {
@@ -101,14 +110,14 @@ class _MainPageState extends State<MainPage> {
                       return;
                     }
 
-                    if (specialController.text.trim().isEmpty) {
+                    if (specialPoint.trim().isEmpty) {
                       return;
                     }
 
                     Navigator.of(context).pop(
                       SentoInfo(
-                        name: nameController.text.trim(),
-                        specialPoint: specialController.text.trim(),
+                        name: name.trim(),
+                        specialPoint: specialPoint.trim(),
                       ),
                     );
                   },
@@ -120,9 +129,6 @@ class _MainPageState extends State<MainPage> {
         );
       },
     );
-
-    nameController.dispose();
-    specialController.dispose();
 
     if (result == null) {
       return;
@@ -147,6 +153,13 @@ class _MainPageState extends State<MainPage> {
                   final SentoInfo sento = _sentoList[index];
                   return Card(
                     child: ListTile(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => SentoDetailPage(sento: sento),
+                          ),
+                        );
+                      },
                       title: Text(sento.name),
                       subtitle: Text(sento.specialPoint),
                     ),
@@ -156,6 +169,36 @@ class _MainPageState extends State<MainPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddDialog,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class SentoDetailPage extends StatelessWidget {
+  const SentoDetailPage({super.key, required this.sento});
+
+  final SentoInfo sento;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('銭湯詳細')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              sento.name,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              sento.specialPoint,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ),
       ),
     );
   }
